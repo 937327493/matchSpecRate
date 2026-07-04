@@ -15,7 +15,8 @@ public enum FormulaEnum {
     /**
      * 全额累进
      */
-    fullPriceRateFormula("fixRateFormula", "全额累进");
+    // 修复：原 formulaCode 误写为 "fixRateFormula"（复制粘贴 bug），应为 "fullPriceRateFormula"
+    fullPriceRateFormula("fullPriceRateFormula", "全额累进");
 
     private String formulaCode;
 
@@ -47,7 +48,11 @@ public enum FormulaEnum {
      * @return
      */
     public static RateFormula getFormula(String code, String factorCode) {
+        // 修复：原实现 getByCode 返回 null 时 switch(byCode) 会 NPE
         FormulaEnum byCode = getByCode(code);
+        if (byCode == null) {
+            throw new IllegalArgumentException("unknown formula code: " + code);
+        }
         switch (byCode) {
             case fixRateFormula: {
                 return new FixRateFormula();
@@ -56,7 +61,8 @@ public enum FormulaEnum {
                 CalculateFactor calculateFactor = new CalculateFactor(factorCode);
                 return new FullPriceRateFormula(calculateFactor);
             }
+            default:
+                throw new IllegalArgumentException("unsupported formula: " + byCode);
         }
-        return null;
     }
 }

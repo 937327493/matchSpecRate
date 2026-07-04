@@ -19,8 +19,8 @@ public class SingleValueMatchSpec implements MatchSpec {
 
     @Override
     public boolean isSatisfiedBy(MatchableResource rateableResource) {
-        //如果值为空，并且允许配置为空，则永远返回true
-        if(value.isEmpty() && RequiredEnum.NULLABLE == requiredEnum) {
+        // 修复：value 可能为 null，原 value.isEmpty() 会 NPE
+        if ((value == null || value.isEmpty()) && RequiredEnum.NULLABLE == requiredEnum) {
             return true;
         }
         String stringValue = rateableResource.fetchString(code);

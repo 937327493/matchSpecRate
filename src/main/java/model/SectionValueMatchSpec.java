@@ -27,22 +27,19 @@ public class SectionValueMatchSpec implements MatchSpec {
 
     @Override
     public boolean isSatisfiedBy(MatchableResource rateableResource) {
-        double value = rateableResource.fetchDouble(code);
-        //是否在区间内
-        if (value > start && value < end) {
-            return true;
-        }
-        //如果包含开始值，是否等于开始值
-        boolean includeStartResult = false;
-        if (includeStart) {
-            includeStartResult = BigDecimal.valueOf(value).compareTo(BigDecimal.valueOf(start)) == 0;
-        }
-        //如果包含结束值，是否等于结束值
-        boolean includeEndResult = false;
-        if (includeEnd) {
-            includeEndResult = BigDecimal.valueOf(value).compareTo(BigDecimal.valueOf(end)) == 0;
-        }
-        boolean result = includeStartResult | includeEndResult;
-        return result;
+        // 修复：原实现把开区间和闭区间边界拆成两段判断，端点附近会出现空洞；
+        // 且混用 double 比较与 BigDecimal.compareTo，精度口径不一致。
+        // 改为统一用 BigDecimal 比较，按 includeStart/includeEnd 决定端点开闭。
+        BigDecimal value = BigDecimal.valueOf(rateableResource.fetchDouble(code));
+        BigDecimal left = BigDecimal.valueOf(start);
+        BigDecimal right = BigDecimal.valueOf(end);
+
+        int cmpLeft = value.compareTo(left);
+        int cmpRight = value.compareTo(right);
+
+        boolean passStart = includeStart ? cmpLeft >= 0 : cmpLeft > 0;
+        boolean passEnd = includeEnd ? cmpRight <= 0 : cmpRight < 0;
+
+        return passStart && passEnd;
     }
 }

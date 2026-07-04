@@ -3,12 +3,12 @@ package model;
 public class OrMatchSpec implements MatchSpec {
 
     /**
-     * 1
+     * 左操作数
      */
     private MatchSpec x;
 
     /**
-     * 2
+     * 右操作数
      */
     private MatchSpec y;
 
@@ -19,7 +19,8 @@ public class OrMatchSpec implements MatchSpec {
 
     @Override
     public boolean isSatisfiedBy(MatchableResource matchableResource) {
-        return false;
+        // 修复：原来写死 return false，应满足任一即匹配
+        return x.isSatisfiedBy(matchableResource) || y.isSatisfiedBy(matchableResource);
     }
 
 }

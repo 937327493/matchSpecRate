@@ -60,20 +60,21 @@ public class FactorConfig implements Matchable {
         return matchSpec;
     }
 
-    private MatchSpec parseSectionMatchSpec(boolean b, boolean b2, RequiredEnum required) {
-        MatchSpec matchSpec;
-        if (RequiredEnum.REQUIRED.equals(required)) {
-            return null;
-        }
-        //如果可以为空，且值为空
-        if (RequiredEnum.NULLABLE.equals(required) && config == null) {
-            //构建特殊的区间匹配规范 重写匹配isSatisfiedBy方法直接返回true
-            return billingElement -> true;
+    private MatchSpec parseSectionMatchSpec(boolean includeStart, boolean includeEnd, RequiredEnum required) {
+        // 修复：原逻辑 if (REQUIRED.equals(required)) return null; 写反了，
+        // 而 toMatchSpec 全程传 REQUIRED，导致所有区间匹配都返回 null（区间功能整个失效）。
+        // 正确语义：REQUIRED 必须正常解析区间；只有 NULLABLE 且 config 为空时才恒真。
+        if (RequiredEnum.NULLABLE.equals(required) && (config == null || config.trim().isEmpty())) {
+            // 可空且未配置：恒真（不参与约束）
+            return resource -> true;
         }
         String[] split = config.split(",");
+        if (split.length < 2) {
+            throw new IllegalArgumentException(
+                "section config must be 'start,end', but got: " + config);
+        }
         double start = Double.parseDouble(split[0].trim());
         double end = Double.parseDouble(split[1].trim());
-        matchSpec = new SectionValueMatchSpec(code, name, start, end, b, b2);
-        return matchSpec;
+        return new SectionValueMatchSpec(code, name, start, end, includeStart, includeEnd);
     }
 }
